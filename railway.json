@@ -4,6 +4,6 @@
         "builder": "NIXPACKS"
     },
     "deploy": {
-        "startCommand": "litestar run-all --host 0.0.0.0 --port $PORT"
+        "startCommand": "litestar run-all --host 0.0.0.0 --port $PORT --http-workers 2"
     }
 }
