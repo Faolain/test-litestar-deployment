@@ -44,13 +44,13 @@ jobs:
         railway environments create $ENV_NAME || true
       env:
         RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-    - name: Set Environment Variable for Ephemeral Environment
-      run: |
-        ENV_NAME="pr-${{ github.event.pull_request.number }}"
-        # Replace VAR_NAME and VAR_VALUE with your actual variable name and value
-        railway variables set DYNAMIC_VAR=${{ env.DYNAMIC_VAR }} -e $ENV_NAME
-      env:
-        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+    # - name: Set Environment Variable for Ephemeral Environment
+    #   run: |
+    #     ENV_NAME="pr-${{ github.event.pull_request.number }}"
+    #     # Replace VAR_NAME and VAR_VALUE with your actual variable name and value
+    #     railway variables set DYNAMIC_VAR=${{ env.DYNAMIC_VAR }} -e $ENV_NAME
+    #   env:
+    #     RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
     - name: Deploy to Ephemeral Environment
       run: |
         railway up -e "pr-${{ github.event.pull_request.number }}"
