@@ -24,10 +24,10 @@ jobs:
       run: |
         # This is just a mock command. Replace with your actual command to generate variables.
         echo "DYNAMIC_VAR=value123" >> $GITHUB_ENV
-    - name: Use Node 12
+    - name: Use Node 18
       uses: actions/setup-node@v1
       with:
-        node-version: 12.x
+        node-version: 18.x
 
     - name: Install packages
       run: yarn install --frozen-lockfile
