@@ -37,23 +37,22 @@ jobs:
     - name: Set Railway Token
       run: |
         echo "RAILWAY_TOKEN=${{ secrets.RAILWAY_TOKEN }}" >> $GITHUB_ENV
-
-    - name: Authenticate with Railway
-      run: railway login
-      
-    - name: Create or Get Ephemeral Environment
-      id: create-env
-      run: |
-        ENV_NAME="pr-${{ github.event.pull_request.number }}"
-        railway environments create $ENV_NAME || true
-    - name: Set Environment Variable for Ephemeral Environment
-      run: |
-        ENV_NAME="pr-${{ github.event.pull_request.number }}"
-        # Replace VAR_NAME and VAR_VALUE with your actual variable name and value
-        railway variables set DYNAMIC_VAR=${{ env.DYNAMIC_VAR }} -e $ENV_NAME
+    # - name: Create or Get Ephemeral Environment
+    #   id: create-env
+    #   run: |
+    #     ENV_NAME="pr-${{ github.event.pull_request.number }}"
+    #     railway environments create $ENV_NAME || true
+    # - name: Set Environment Variable for Ephemeral Environment
+    #   run: |
+    #     ENV_NAME="pr-${{ github.event.pull_request.number }}"
+    #     # Replace VAR_NAME and VAR_VALUE with your actual variable name and value
+    #     railway variables set DYNAMIC_VAR=${{ env.DYNAMIC_VAR }} -e $ENV_NAME
     - name: Deploy to Ephemeral Environment
       run: |
         railway up -e "pr-${{ github.event.pull_request.number }}"
+      env: 
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        DYNAMIC_VAR: ${{ env.DYNAMIC_VAR }}
   cleanup:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
