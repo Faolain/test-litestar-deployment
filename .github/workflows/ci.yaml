@@ -34,10 +34,13 @@ jobs:
 
     - name: Install Railway
       run: npm i -g @railway/cli
+    - name: Set Railway Token
+      run: |
+        echo "RAILWAY_TOKEN=${{ secrets.RAILWAY_TOKEN }}" >> $GITHUB_ENV
 
     - name: Authenticate with Railway
-      run: |
-        echo "${{ secrets.RAILWAY_TOKEN }}" | railway login
+      run: railway login
+      
     - name: Create or Get Ephemeral Environment
       id: create-env
       run: |
