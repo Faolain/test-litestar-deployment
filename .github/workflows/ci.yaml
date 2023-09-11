@@ -19,7 +19,7 @@ jobs:
     - name: Store initial commit SHA when PR is opened
       if: github.event.action == 'opened'
       run: |
-        echo "sha_short=$(git rev-parse --short HEAD)" > initial_sha.txt
+        echo "$(git rev-parse --short HEAD)" > initial_sha.txt
         echo "Initial SHA stored: ${{ github.sha }}"
 
     - name: Upload SHA as artifact
