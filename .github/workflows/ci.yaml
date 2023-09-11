@@ -15,6 +15,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+    - name: Set outputs
+      id: vars
+      run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
     - name: Generate dynamic variables
       id: generate-vars
       run: |
@@ -27,7 +30,7 @@ jobs:
         RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
         SRC_ENVIRONMENT_NAME: production
-        DEST_ENV_NAME: pr-${{ github.event.pull_request.number }}-${{ github.sha }}
+        DEST_ENV_NAME: pr-${{ github.event.pull_request.number }}-${{ steps.vars.outputs.sha_short }}
         PROVIDER: python
         ENV_VARS: '{"database_url": "${{ env.DYNAMIC_VAR }}", "other_key": "other_value"}'
   cleanup:
@@ -39,4 +42,4 @@ jobs:
       with:
         RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
-        DEST_ENV_NAME: pr-${{ github.event.pull_request.number }}-${{ github.sha }}
+        DEST_ENV_NAME: pr-${{ github.event.pull_request.number }}-${{ steps.vars.outputs.sha_short }}
