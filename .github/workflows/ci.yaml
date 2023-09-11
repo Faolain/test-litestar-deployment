@@ -24,7 +24,7 @@ jobs:
       if: github.event.action == 'opened' || github.event.action == 'synchronize'
       uses: Faolain/railway-pr-deploy@v1.0.1
       with:
-        RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+        RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
         SRC_ENVIRONMENT_NAME: production
         DEST_ENV_NAME: pr-${{ github.event.pull_request.number }}-${{ github.sha }}
@@ -37,6 +37,6 @@ jobs:
     - name: Delete PR environment on Railway
       uses: Faolain/railway-pr-delete@v1.0.0
       with:
-        RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+        RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
         DEST_ENV_NAME: pr-${{ github.event.pull_request.number }}-${{ github.sha }}
