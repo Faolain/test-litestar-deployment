@@ -2,8 +2,6 @@ name: Deploy Pull Request to Ephemeral Railway Environment
 
 on:
   pull_request:
-    branches:
-      - main
     types:
       - opened
       - synchronize
@@ -14,70 +12,31 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request' || github.event.action != 'closed'
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
-
     - name: Generate dynamic variables
       id: generate-vars
       run: |
         # This is just a mock command. Replace with your actual command to generate variables.
         echo "DYNAMIC_VAR=value123" >> $GITHUB_ENV
-    - name: Use Node 18
-      uses: actions/setup-node@v1
+    - name: Create PR environment on Railway
+      if: github.event.action == 'opened'
+      uses: Faolain/railway-pr-deploy
       with:
-        node-version: 18.x
-
-    - name: Install packages
-      run: yarn install --frozen-lockfile
-
-    - name: Install Railway
-      run: npm i -g @railway/cli
-    - name: Set Railway Token
-      run: |
-        echo "RAILWAY_TOKEN=${{ secrets.RAILWAY_TOKEN }}" >> $GITHUB_ENV
-    - name: Create or Get Ephemeral Environment
-      id: create-env
-      run: |
-        ENV_NAME="pr-${{ github.event.pull_request.number }}"
-        railway environments create $ENV_NAME || true
-      env:
-        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-    # - name: Set Environment Variable for Ephemeral Environment
-    #   run: |
-    #     ENV_NAME="pr-${{ github.event.pull_request.number }}"
-    #     # Replace VAR_NAME and VAR_VALUE with your actual variable name and value
-    #     railway variables set DYNAMIC_VAR=${{ env.DYNAMIC_VAR }} -e $ENV_NAME
-    #   env:
-    #     RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-    - name: Deploy to Ephemeral Environment
-      run: |
-        railway up -e "pr-${{ github.event.pull_request.number }}"
-      env: 
-        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        DYNAMIC_VAR: ${{ env.DYNAMIC_VAR }}
+        RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+        PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+        SRC_ENVIRONMENT_NAME: production
+        DEST_ENV_NAME: pr-${{ github.event.pull_request.number }}-${{ github.sha }}
+        PROVIDER: python
+        ENV_VARS: '{"database_url": "${{ env.DYNAMIC_VAR }}", "other_key": "other_value"}'
   cleanup:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
     steps:
-    - name: Use Node 12
-      uses: actions/setup-node@v1
+    - name: Delete PR environment on Railway
+      uses: Faolain/railway-pr-delete
       with:
-        node-version: 12.x
-
-    - name: Install packages
-      run: yarn install --frozen-lockfile
-
-    - name: Run tests
-      run: yarn test
-
-    - name: Install Railway
-      run: npm i -g @railway/cli
-
-    - name: Authenticate with Railway
-      run: |
-        echo "${{ secrets.RAILWAY_TOKEN }}" | railway login
-    - name: Destroy Ephemeral Environment
-      run: |
-        railway environments destroy "pr-${{ github.event.pull_request.number }}" --yes
+        RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+        PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+        DEST_ENV_NAME: pr-${{ github.event.pull_request.number }}-${{ github.sha }}
