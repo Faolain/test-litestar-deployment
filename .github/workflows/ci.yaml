@@ -60,18 +60,9 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
     steps:
-    - name: Download SHA artifact on further commits or PR close
-      if: github.event.action == 'closed'
-      uses: actions/download-artifact@v2
-      with:
-        name: initial-sha
-
-    - name: Set INITIAL_SHA as environment variable
-      run: echo "INITIAL_SHA=$(cat initial_sha.txt)" >> $GITHUB_ENV
-
     - name: Delete PR environment on Railway
-      uses: Faolain/railway-pr-delete@v1.0.0
+      uses: Faolain/railway-pr-delete@v1.0.3
       with:
         RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
-        DEST_ENV_NAME: pr-${{ github.event.pull_request.number }}-${{  env.INITIAL_SHA }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
