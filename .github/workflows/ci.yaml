@@ -16,53 +16,53 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Store initial commit SHA when PR is opened
-      if: github.event.action == 'opened'
+    - name: Declare some variables
+      shell: bash
       run: |
-        echo "$(git rev-parse --short HEAD)" > initial_sha.txt
-        echo "Initial SHA stored: ${{ github.sha }}"
-
-    - name: Upload SHA as artifact
-      if: github.event.action == 'opened'
-      uses: actions/upload-artifact@v2
-      with:
-        name: initial-sha
-        path: initial_sha.txt
-
-    # - name: Use the initial commit SHA
-    #   if: github.event.action == 'synchronize' || github.event.action == 'closed'
-    #   run: |
-    #     INITIAL_SHA=$(cat initial_sha.txt)
-    #     echo "Initial commit SHA of PR was: $INITIAL_SHA"
-
-    - name: Set INITIAL_SHA as environment variable
-      run: echo "INITIAL_SHA=$(cat initial_sha.txt)" >> $GITHUB_ENV
-
-    - name: Generate dynamic variables
-      id: generate-vars
+        echo "sha_short=$(git rev-parse --short "$GITHUB_SHA")" >> "$GITHUB_ENV"
+        echo "branch=$(echo ${GITHUB_REF#refs/heads/})" >> "$GITHUB_ENV"
+    
+    - name: Another step
       run: |
-        # This is just a mock command. Replace with your actual command to generate variables.
-        echo "DYNAMIC_VAR=value123" >> $GITHUB_ENV
+        echo "Branch: ${{ env.branch }}"
+        echo "Sha: ${{ env.sha_short }}"
+
+    # - name: Set INITIAL_SHA as environment variable
+    #   run: echo "INITIAL_SHA=$(cat initial_sha.txt)" >> $GITHUB_ENV
+
+  #   - name: Generate dynamic variables
+  #     id: generate-vars
+  #     run: |
+  #       # This is just a mock command. Replace with your actual command to generate variables.
+  #       echo "DYNAMIC_VAR=value123" >> $GITHUB_ENV
   
-    - name: Create PR environment on Railway
-      if: github.event.action == 'opened'
-      uses: Faolain/railway-pr-deploy@v1.0.5
-      with:
-        RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
-        SRC_ENVIRONMENT_NAME: production
-        DEST_ENV_NAME: pr-${{ github.event.pull_request.number }}-${{ env.INITIAL_SHA }}
-        PROVIDER: python
-        ENV_VARS: '{"database_url": "${{ env.DYNAMIC_VAR }}", "other_key": "other_value"}'
-        branch_name: ${{ github.head_ref }}
-        repository: ${{ github.repository }}
-  cleanup:
-    if: github.event_name == 'pull_request' && github.event.action == 'closed'
-    runs-on: ubuntu-latest
-    steps:
-    - name: Delete PR environment on Railway
-      uses: Faolain/railway-pr-delete@v1.0.6
-      with:
-        RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+  #   - name: Create PR environment on Railway
+  #     if: github.event.action == 'opened'
+  #     uses: Faolain/railway-pr-deploy@v1.0.5
+  #     with:
+  #       RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+  #       PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+  #       SRC_ENVIRONMENT_NAME: production
+  #       DEST_ENV_NAME: pr-${{ github.event.pull_request.number }}-${{ env.INITIAL_SHA }}
+  #       PROVIDER: python
+  #       ENV_VARS: '{"database_url": "${{ env.DYNAMIC_VAR }}", "other_key": "other_value"}'
+  #       branch_name: ${{ github.head_ref }}
+  #       repository: ${{ github.repository }}
+  # cleanup:
+  #   if: github.event_name == 'pull_request' && github.event.action == 'closed'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - name: Download SHA artifact
+  #     uses: actions/download-artifact@v2
+  #     with:
+  #       name: initial-sha
+        
+  #   - name: Set INITIAL_SHA as environment variable
+  #     run: echo "INITIAL_SHA=$(cat initial_sha.txt)" >> $GITHUB_ENV
+
+  #   - name: Delete PR environment on Railway
+  #     uses: Faolain/railway-pr-delete@v1.0.0
+  #     with:
+  #       RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+  #       PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+  #       DEST_ENV_NAME: pr-${{ github.event.pull_request.number }}-${{  env.INITIAL_SHA }}
