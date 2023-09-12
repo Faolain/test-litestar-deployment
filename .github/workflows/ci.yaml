@@ -1,4 +1,4 @@
-name: Deploy Pull Request to Ephemeral Railway Environmentt
+name: Deploy Pull Request to Ephemeral Railway Environment
 
 on:
   pull_request:
