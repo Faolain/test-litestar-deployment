@@ -24,7 +24,7 @@ jobs:
   
     - name: Create PR environment on Railway
       if: github.event.action == 'opened'
-      uses: Faolain/railway-pr-deploy@v1.0.6
+      uses: Faolain/railway-pr-deploy@v1.0.7
       with:
         RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Delete PR environment on Railway
-      uses: Faolain/railway-pr-delete@v1.0.6
+      uses: Faolain/railway-pr-delete@v1.0.7
       with:
         RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
