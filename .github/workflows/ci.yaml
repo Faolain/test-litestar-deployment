@@ -13,15 +13,46 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request' || github.event.action != 'closed'
     steps:
+
     - name: Checkout code
       uses: actions/checkout@v2
+      
+    - name: Create a Neon Branch 🚀
+      uses: neondatabase/create-branch-action@v4
+      with:
+        project_id: ${{ secrets.NEON_PROJECT_ID }}
+        parent: main
+        branch_name: pr-${{ github.event.pull_request.number }}
+        api_key: ${{ secrets.NEON_API_KEY }}
+      id: create-branch
 
-    - name: Generate dynamic variables
-      id: generate-vars
+    - name: Install Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'  # Or another version if you prefer
+
+    - name: Install Upstash CLI
+      run: npm i -g @upstash/cli
+
+    - name: Create Upstash Redis
+      id: create_redis  # This ID allows us to reference the outputs in subsequent steps
       run: |
-        # This is just a mock command. Replace with your actual command to generate variables.
-        echo "DYNAMIC_VAR=value123" >> $GITHUB_ENV
-  
+          OUTPUT=$(upstash redis create --name=pr-${{ github.event.pull_request.number }} --region=eu-west-1 --json)
+          PASSWORD=$(echo "$OUTPUT" | jq -r '.password')
+          ENDPOINT=$(echo "$OUTPUT" | jq -r '.endpoint')
+          PORT=$(echo "$OUTPUT" | jq -r '.port')
+          
+          # Mask the password in the logs
+          echo "::add-mask::$PASSWORD"
+          
+          # Set the outputs for subsequent steps
+          echo "::set-output name=redis_password::$PASSWORD"
+          echo "::set-output name=redis_endpoint::$ENDPOINT"
+          echo "::set-output name=redis_port::$PORT"  # Fixed the output name from redis_endpoint to redis_port
+      env:
+        UPSTASH_EMAIL: ${{ secrets.UPSTASH_EMAIL }}
+        UPSTASH_API_KEY: ${{ secrets.UPSTASH_API_KEY }}
+
     - name: Create PR environment on Railway
       if: github.event.action == 'opened'
       uses: Faolain/railway-pr-deploy@v1.0.7
@@ -31,7 +62,7 @@ jobs:
         SRC_ENVIRONMENT_NAME: production
         DEST_ENV_NAME: pr-${{ github.event.pull_request.number }}
         PROVIDER: python
-        ENV_VARS: '{"database_url": "${{ env.DYNAMIC_VAR }}", "other_key": "other_value"}'
+        ENV_VARS: '{"PGHOST": "${{ steps.create-branch.outputs.host_with_pooler}}", "REDIS_URL": "redis://default:${{ steps.create_redis.outputs.redis_password }}@${{ steps.create_redis.outputs.redis_endpoint }}:${{ steps.create_redis.outputs.port }}"}'
         branch_name: ${{ github.head_ref }}
   cleanup:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
@@ -43,3 +74,27 @@ jobs:
         RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
         DEST_ENV_NAME: pr-${{ github.event.pull_request.number }}
+
+    - name: Cleanup Upstash Redis
+      run: |
+        # Get the list of all databases
+        DATABASES_JSON=$(upstash redis list --json)
+        
+        # Extract the ID of the database with the matching name
+        DATABASE_ID=$(echo "$DATABASES_JSON" | jq -r --arg name "pr-${{ github.event.pull_request.number }}" '.[] | select(.database_name == $name) | .database_id')
+        
+        # If the ID was found, delete the database
+        if [[ ! -z "$DATABASE_ID" ]]; then
+          upstash redis delete --id "$DATABASE_ID"
+        fi
+
+    - name: Delete a Neon Branch 🚀
+      jobs:
+        delete-neon-branch:
+          uses: neondatabase/delete-branch-action@v3
+          with:
+            project_id: ${{ secrets.NEON_PROJECT_ID }}
+            branch: pr-${{ github.event.pull_request.number }}
+            api_key: ${{ secrets.NEON_API_KEY }}
+    
+
