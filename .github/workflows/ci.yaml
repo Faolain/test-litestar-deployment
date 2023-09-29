@@ -62,7 +62,7 @@ jobs:
         SRC_ENVIRONMENT_NAME: production
         DEST_ENV_NAME: pr-${{ github.event.pull_request.number }}
         PROVIDER: python
-        ENV_VARS: '{"PGHOST": "${{ steps.create-branch.outputs.host_with_pooler}}", "REDIS_URL": "redis://default:${{ steps.create_redis.outputs.redis_password }}@${{ steps.create_redis.outputs.redis_endpoint }}:${{ steps.create_redis.outputs.port }}"}'
+        ENV_VARS: '{"PGHOST": "${{ steps.create-branch.outputs.host}}", "REDIS_URL": "redis://default:${{ steps.create_redis.outputs.redis_password }}@${{ steps.create_redis.outputs.redis_endpoint }}:${{ steps.create_redis.outputs.port }}"}'
         branch_name: ${{ github.head_ref }}
   cleanup:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
@@ -74,6 +74,14 @@ jobs:
         RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
         DEST_ENV_NAME: pr-${{ github.event.pull_request.number }}
+
+    - name: Install Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'  # Or another version if you prefer
+
+    - name: Install Upstash CLI
+      run: npm i -g @upstash/cli
 
     - name: Cleanup Upstash Redis
       run: |
@@ -87,6 +95,9 @@ jobs:
         if [[ ! -z "$DATABASE_ID" ]]; then
           upstash redis delete --id "$DATABASE_ID"
         fi
+      env:
+        UPSTASH_EMAIL: ${{ secrets.UPSTASH_EMAIL }}
+        UPSTASH_API_KEY: ${{ secrets.UPSTASH_API_KEY }}
 
     - name: Delete a Neon Branch 🚀
       uses: neondatabase/delete-branch-action@v3
