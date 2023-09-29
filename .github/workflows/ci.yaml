@@ -89,12 +89,10 @@ jobs:
         fi
 
     - name: Delete a Neon Branch 🚀
-      jobs:
-        delete-neon-branch:
-          uses: neondatabase/delete-branch-action@v3
-          with:
-            project_id: ${{ secrets.NEON_PROJECT_ID }}
-            branch: pr-${{ github.event.pull_request.number }}
-            api_key: ${{ secrets.NEON_API_KEY }}
-    
+      uses: neondatabase/delete-branch-action@v3
+      with:
+        project_id: ${{ secrets.NEON_PROJECT_ID }}
+        branch: pr-${{ github.event.pull_request.number }}
+        api_key: ${{ secrets.NEON_API_KEY }}
+
 
